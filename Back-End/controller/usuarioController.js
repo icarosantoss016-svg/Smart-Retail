@@ -3,34 +3,51 @@ const bcrypt = require("bcrypt");
 
 exports.criarUsuario = async (req, res) => {
   try {
-    const { login, senha } = req.body;
+    const {login, senha, perfil} = req.body
 
-    
-    if (!login || typeof login !== 'string' || !login.trim()) {
-      return res.status(400).json({ error: "Login é obrigatório." });
+    if(!login|| typeof login!=='string'||!login.trim()){
+      return res.status(400).json({error:'Login é obrigatório.'})
     }
 
-    if (!senha || typeof senha !== 'string' || !senha.trim()) {
-      return res.status(400).json({ error: "Senha é obrigatória." });
+    if(!senha || typeof senha !=='string' || !senha.trim()){
+      return res.status(400).json({error:'Senha é obrigatória.'})
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const senhaCriptografada = await bcrypt.hash(senha, salt);
+    if(!perfil|| typeof perfil !=='string'|| !perfil.trim()){
+      return res.status(400).json({error:'Perfil é obrigatória.'})
+    }
+
+    const perfilFormatado = perfil.trim().toUpperCase()
+
+    const perfisPermitidos = ['ADMIN', 'USUARIO']
+    if(!perfisPermitidos.includes(perfilFormatado)){
+      return res.status(400).json({error: `Perfil inválido. Use: ${perfisPermitidos.join(', ')}`})
+    }
+
+    const salt = await bcrypt.genSalt(10)
+    const senhaCriptografada = await bcrypt.hash(senha, salt)
 
     const novoUsuario = await Usuario.create({
-      login: login.trim(),
-      senha: senhaCriptografada,
-    });
+      login:login.trim(),
+      senha:senhaCriptografada,
+      perfil:perfilFormatado
+    })
 
-    return res.status(201).json({ 
-      mensagem: "Usuário criado com sucesso.",
-      id: novoUsuario.id
-    });
+    return res.status(201).json({
+      mensagem:'Usuário criado com sucesso.',
+      id:novoUsuario.id
+    })
+
   } catch (error) {
-    console.error("Erro ao criar usuário:", error);
-    return res.status(500).json({ error: "Erro interno ao criar usuário." });
+    if (error.name === 'SequelizeUniqueConstraintError'){
+      return res.status(409).json({error:'Este login já esta em uso.'})
+    }
+
+    console.error('Erro ao criar usuário:', error)
+    return res.status(500).json({error:'Erro interno do servidor.'})
+    
   }
-};
+}
 
 exports.listarUsuarios = async (req, res) => {
   try {
@@ -42,7 +59,7 @@ exports.listarUsuarios = async (req, res) => {
     console.error("Erro ao listar usuários:", error);
     return res.status(500).json({ error: "Erro interno ao listar usuários." });
   }
-};
+}
 
 exports.buscarUsuarioId = async (req, res) => {
   try {
@@ -59,7 +76,7 @@ exports.buscarUsuarioId = async (req, res) => {
     console.error("Erro ao buscar o usuário:", error);
     return res.status(500).json({ error: "Erro interno ao buscar usuário." });
   }
-};
+}
 
 exports.deletarUsuario = async (req, res) => {
   try {
@@ -76,9 +93,9 @@ exports.deletarUsuario = async (req, res) => {
     console.error("Erro ao deletar o usuário:", error);
     return res.status(500).json({ error: "Erro interno ao deletar usuário." });
   }
-};
+}
 
-exports.atualizarUsuario = async (req, res) => {
+exports.atualizarSenha = async (req, res) => {
   try {
     const usuario = await Usuario.findByPk(req.params.id);
 
@@ -101,4 +118,4 @@ exports.atualizarUsuario = async (req, res) => {
     console.error("Erro ao atualizar usuário:", error);
     return res.status(500).json({ error: "Erro interno ao atualizar o usuário." });
   }
-};
+}

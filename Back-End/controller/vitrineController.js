@@ -1,27 +1,37 @@
-const { error } = require("node:console");
+const { json } = require("sequelize");
 const Vitrine = require("../models/vitrine");
+const statusPermitido = ["ATIVA", "DESATIVADA", "MANUTENÇÃO"];
 
 exports.criarVitrine = async (req, res) => {
   try {
     const { localizacao, statusVitrine } = req.body;
+
     if (
       !localizacao ||
-      localizacao === null ||
-      localizacao === undefined ||
+      typeof localizacao !== "string" ||
       !localizacao.trim()
     ) {
-      return res.status(400).json({ error: "Localização é obrigatória" });
+      return res.status(400).json({ error: "Localização é obrigatória." });
     }
 
-    const novaVitrine = await Vitrine.create({
-      localizacao,
-      statusVitrine: statusVitrine || "ATIVA",
-    });
+    const dadosNovaVitrine = {
+      localizacao: localizacao.trim(),
+    };
 
-    res.status(201).json(novaVitrine);
+    if (statusVitrine) {
+      const statusFormatado = statusVitrine.trim().toUpperCase;
+      if (!statusPermitido.includes(statusFormatado)) {
+        return res
+          .status(400)
+          .json({ error: `Status inválido.Use:${statusPermitido.join(", ")}` });
+      }
+      dadosNovaVitrine.statusVitrine = statusFormatado;
+    }
+
+    const novaVitrine = await Vitrine.create(dadosNovaVitrine);
+    return res.status(201).json(novaVitrine);
   } catch (error) {
-    console.error("erro ao criar uma vitrine:", error);
-
+    console.error("Erro ao criar vitrine:", error);
     return res.status(500).json({ error: "Erro interno ao criar vitrine." });
   }
 };
@@ -73,25 +83,30 @@ exports.atualizarVitrine = async (req, res) => {
       return res.status(404).json({ error: "Vitrine não encontrada." });
     }
 
-    const { localizacao, statusVitrine } = req.body;
+    const { localizacao } = req.body;
 
     if (
       !localizacao ||
-      localizacao === null ||
-      localizacao === undefined ||
+      typeof localizacao !== "string" ||
       !localizacao.trim()
     ) {
-      return res.status(400).json({ error: "Localização é obrigatória." });
+      return res
+        .status(400)
+        .json({ error: "Localização é obrigatória para esta operação." });
     }
 
     await vitrine.update({
-      localizacao,
-      statusVitrine: statusVitrine || vitrine.statusVitrine,
+      localizacao: localizacao.trim(),
     });
 
-    res.status(200).json({ mensagem: "Vitrine atualizada:", vitrine });
+    return res
+      .status(200)
+      .json({
+        mensagem: "Localização da vitrine atualizada com sucesso.",
+        vitrine,
+      });
   } catch (error) {
-    console.error("Error ao atualizar vitrine", error);
+    console.error("Error ao atualizar vitrine:", error);
     return res
       .status(500)
       .json({ error: "Erro interno ao atualizar vitrine." });
@@ -119,23 +134,19 @@ exports.atualizarStatusVitrine = async (req, res) => {
     const statusFormatado = statusVitrine.toUpperCase();
 
     if (!["ATIVA", "DESATIVADA", "MANUTENÇÃO"].includes(statusFormatado)) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Status inválido. Os valores permitidos são: ATIVA, DESATIVADA, MANUTENÇÃO.",
-        });
+      return res.status(400).json({
+        error:
+          "Status inválido. Os valores permitidos são: ATIVA, DESATIVADA, MANUTENÇÃO.",
+      });
     }
 
     await vitrine.update({ statusVitrine: statusFormatado });
 
-    res
-      .status(200)
-      .json({ mensagem: "Status de vitrine atualizado com sucesso", vitrine });
+    res.status(200).json({ mensagem: "Status de vitrine atualizado com sucesso", vitrine });
   } catch (error) {
     console.error("Erro ao atualizar status da vitrine:", error);
     return res
       .status(500)
-      .json({ error: "Erro interno ao atualizar status da vitrine" })
+      .json({ error: "Erro interno ao atualizar status da vitrine" });
   }
-}
+};

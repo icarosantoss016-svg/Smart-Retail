@@ -10,7 +10,12 @@ const Usuarios = sequelize.define('Usuarios',{
     senha:{
         type:DataTypes.STRING,
         allowNull:false,
+    },
+    perfil:{
+        type:DataTypes.ENUM('ADMIN','USUARIO'),
+        allowNull:false
     }
+
 })
 
 module.exports= Usuarios
