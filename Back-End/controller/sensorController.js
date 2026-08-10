@@ -4,62 +4,66 @@ const Produtos = require("../models/produtos")
 const vitrineEstado = require("../config/vitrineEstado")
 const mqttClient = require("../config/mqtt")
 
-exports.detectarPresenca = async (idVitrine, payload) => {
-  const { duracaoMs, distanciaMedia, intensidadeLed } = payload
+exports.detectarPresenca = async (idVitrine,payload) =>{
+  const { duracaoMs,distanciaMedia, intesidadeLed} = payload
 
-  if (!duracaoMs) {
-    return console.log(`[Vitrine ${idVitrine}] Presença não detectada.`)
+  if(!duracaoMs){
+    console.log(`[Vitrine #${idVitrine}] Presença inválida ou vazia ignorada.`)
+    return
   }
 
   try {
     const produtoIdInteragido = vitrineEstado.obterProdutoAtivo(idVitrine)
 
     await PresencaLog.create({
-      entrada: new Date(Date.now() - duracaoMs),
+      entrada:new Date(Date.now()- duracaoMs),
       saida: new Date(),
-      durancao: duracaoMs,
-      produtoId: produtoIdInteragido,
-      idVitrine: idVitrine,
-      distanciaMedia: distanciaMedia,
-      intensidadeLed: intensidadeLed,
+      duracao:duracaoMs,
+      produtoId:produtoIdInteragido,
+      intesidadeLed:intesidadeLed
     })
 
-    console.log(
-      `[Vitrine ${idVitrine}] Presença registrada. Duração:${duracaoMs / 1000}s | Dist: ${distanciaMedia}cm | LED:${intensidadeLed}%`,
-    )
+    console.log(`[Vitrine #${idVitrine}] Presença registrada. Duração: ${duracaoMs/1000}s | Distancia Média: ${distanciaMedia}cm | LED: ${intesidadeLed}%`)
 
     vitrineEstado.limpar(idVitrine)
   } catch (error) {
-    console.error(
-      `Erro ao registrar presença da Vitrine ${idVitrine}:`,
-      error.message,
-    )
+    console.error(`Erro ao registrar presença da Vitrine ${idVitrine}:`, error.message)
   }
 }
 
-exports.detectarNfc = async (idVitrine, payload) => {
-  const { nfcTag } = payload
+exports.detectarNfc = async (idVitrine, payload) =>{
+  const {nfcTag} = payload
+
+  if(!nfcTag){
+    console.log(`[Vitrine #${idVitrine}] Payload NFC inválido recebido.`)
+    return
+  }
 
   try {
-    const produto = await Produtos.findOne({ where: { nfcTag } })
+    const produto = await Produtos.findOne({where:{nfcTag}})
 
-    if (!produto) {
-      console.log(`Tag ${nfcTag} não encontrada no banco. Produto não localizado.`)
+    if(!produto){
+      console.log(`[Vitrine #${idVitrine}] Tag ${nfcTag} não encontrada. Produto não localizado.`)
       return
     }
 
-    await ScanLog.create({ produtoId: produto.produtoId })
+    const produtoIdAtivo = vitrineEstado.obterProdutoAtivo(idVitrine)
 
-    console.log(`[Vitrine ${idVitrine}] Produto escaneado: ${produto.nome}`)
+    if(produtoIdAtivo!== produto.produtoId){
+      await ScanLog.create({produtoId:produto.produtoId})
+      console.log(`[Vitrine ${idVitrine}] Produto escaneado: ${produto.nome}`)
+    }else{
+      console.log(`[Vitrine ${idVitrine}] Produto ${produto.nome} já está ativo. Scan duplicado ignorado.`)
+    }
 
-    vitrineEstado.definirProdutoAtivo (idVitrine,produto.produtoId)
+    vitrineEstado.definirProdutoAtivo(idVitrine, produto.produtoId)
 
-    if(produto.cor){
-        const payloadCor = JSON.stringify({hex:produto.cor})
-        mqttClient.publish(`vitrine/${idVitrine}/cor`, payloadCor)
-        console.log(`[MQTT] Cor ${produto.cor} enviada para a vitrine #${idVitrine}`)
+    if(produto.cor && mqttClient.connect){
+      const payloadCor = JSON.stringify({hex: produto.cor})
+      mqttClient.publish(`vitrine/${idVitrine}/cor`, payloadCor)
+      console.log(`[MQTT] Cor ${produto.cor} enviada para a vitrine #${idVitrine}.`)
     }
   } catch (error) {
-    console.error('Erro ao processar NFC',error.message)
+    console.error(`Erro ao processar NFC da vitrine ${idVitrine}:`,error.message)    
   }
 }
