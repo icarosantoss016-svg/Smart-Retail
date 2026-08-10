@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detector de Cores</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="camera-container">
+            <video id="video-feed" autoplay playsinline></video>
+            <div class="crosshair">
+                <div class="crosshair-h"></div>
+                <div class="crosshair-v"></div>
+                <div class="crosshair-center"></div>
+            </div>
+            <canvas id="canvas-process"></canvas>
+        </div>
+        
+        <div class="result-card">
+            <h2>Cor Detectada</h2>
+            <div class="color-display">
+                <div id="color-swatch" class="swatch"></div>
+                <div class="color-info">
+                    <div class="color-value">
+                        <span class="label">HEX</span>
+                        <span id="hex-value" class="value">#000000</span>
+                    </div>
+                    <div class="color-value">
+                        <span class="label">RGB</span>
+                        <span id="rgb-value" class="value">rgb(0, 0, 0)</span>
+                    </div>
+                </div>
+            </div>
+            <button id="copy-btn" class="action-btn">Copiar HEX</button>
+        </div>
+        
+        <div id="error-message" class="error-toast hidden">
+            Não foi possível acessar a câmera. Verifique as permissões.
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
