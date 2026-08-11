@@ -119,3 +119,22 @@ exports.atualizarSenha = async (req, res) => {
     return res.status(500).json({ error: "Erro interno ao atualizar o usuário." });
   }
 }
+
+exports.criarAdminPadrao = async (){
+  try {
+    cont adminExiste = await Usuario.findOne({where:{login:'admin'}})
+
+    if(!adminExiste){
+      const senhaHash = await bcrypt.hash('admin123',10)
+
+      await Usuario.create({
+        login:'admin',
+        senha:senhaHash,
+        perfil:'ADMIN'
+      })
+      console.log('Usuário admin padrão criado(Login:admin / Senha:admin123)')      
+    }
+  } catch (error) {
+    console.error( 'Erro ao criar usuario padrão:', error)    
+  }
+}
