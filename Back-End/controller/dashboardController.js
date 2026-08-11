@@ -13,20 +13,23 @@ exports.obterDadosDashboard = async (req,res) =>{
         const presencas = await PresencaLog.findAll({order:[['id','DESC']]})
 
         let tempoTotalMs=0
-        const historicoFormatado = presencas.map(log=>{
-            if(log.duracao) {
+        let presencasValidas = 0
+
+
+        const historicoFormatado = presencas.reduce((listaFinal,log)=>{
+            if(log.duracao){
                 tempoTotalMs+= parseInt(log.duracao)
+                presencasValidas++
 
-                return{
-                    id:log.id,
-                    produtoNome:mapaProdutos[log.produtoId]||'Semp Produto.',
-                    duracao:log.duracao ? `${(log.duracao/1000).toFixed('')}s` : '0s',
+                listaFinal.push({
+                    id: log.id,
+                    produtoNome:mapaProdutos[log.produtoId]|| 'Sem Produto.',
+                    duracao: `${(log.duracao/1000).toFixed(1)}s`,
                     entrada:log.entrada
-                }
+                })
             }
-
-            
-        })
+            return listaFinal
+        },[])
 
         const scans = await ScanLog.findAll()
         const contagemScans  = {}
@@ -45,8 +48,8 @@ exports.obterDadosDashboard = async (req,res) =>{
         }).sort((a,b)=> b.quantidade-a.quantidade)
 
         let tempoMedioMs = 0
-        if(presencas.length>0){
-            tempoMedioMs= tempoTotalMs/presencas.length
+        if(presencasValidas>0){
+            tempoMedioMs= tempoTotalMs/presencasValidas
         }
 
         const minutosMedios = Math.floor(tempoMedioMs/60000)
@@ -56,7 +59,7 @@ exports.obterDadosDashboard = async (req,res) =>{
 
         return res.status(200).json({
             historico:historicoFormatado,
-            raking:ranking,
+            ranking:ranking,
             tempoMedioAtivacao: tempoMedioFormatado,
             totalScans: scans.length
 
