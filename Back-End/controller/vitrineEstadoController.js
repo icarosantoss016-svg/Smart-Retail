@@ -5,6 +5,10 @@ exports.obterEstadoVitrine = (req,res) =>{
         const idVitrine = req.params.id
         const estado = vitrineEstado.obterEstadoCompleto(idVitrine)
 
+        if(!estado){
+            return res.status(404).json({error:'Vitrine não encontrada ou inativa.'})
+        }
+
         return res.status(200).json(estado)
     } catch (error) {
         console.error('Erro ao obter estado da vitrine:',error)
