@@ -29,5 +29,30 @@ exports.receberCorComplementar = (req,res) => {
 
 
 exports.receberCorCamera = (req,res)=>{
-    const {hex, idVitrine}
+    const {hex, idVitrine} = req.body
+    const vitrineId = idVitrine ||1
+
+    if(!hex|| typeof hex !=='string'|| !hex.trim()){
+        return res.status(400).json({error:' Campo hex é obrigatório.'})
+    }
+
+    vitrineEstado.definirCorCamera(vitrineId,hex.trim())
+
+    if(vitrineEstado.obterProdutoAtivo(vitrineId)!==null){
+        return res.status(200).json({ignorado:true,
+            motivo:'Produto ativo na vitrine. Cor da câmera atualizada no servidor, mas ignorada para o LED.'
+        })
+
+        const topicoDinamico = `vitrine/${vitrineId}/cor`
+        const payloadCor =JSON.stringify({hex: hex.trim()})
+
+        if (mqttClient.connected){
+            mqttClient.publish(topicoDinamico,payloadCor)
+            console.log(`[Câmera] Cor (${hex}) enviada para o LED no tópico: ${topicoDinamico}`)
+            
+        } else{
+            console.warn(`[Aviso] MQTT desconectado. Não foi possível publicar a cor ${hex}.`)
+        }
+    }
+    return res.status(200).json({ sucesso: true, cor: hex.trim() })
 }
