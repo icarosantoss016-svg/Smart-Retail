@@ -120,9 +120,9 @@ exports.atualizarSenha = async (req, res) => {
   }
 }
 
-exports.criarAdminPadrao = async (){
+exports.criarAdminPadrao = async ()=>{
   try {
-    cont adminExiste = await Usuario.findOne({where:{login:'admin'}})
+    const adminExiste = await Usuario.findOne({where:{login:'admin'}})
 
     if(!adminExiste){
       const senhaHash = await bcrypt.hash('admin123',10)
