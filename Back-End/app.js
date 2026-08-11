@@ -14,7 +14,7 @@ const colorRoutes = require('./routes/colorRoutes')
 const produtosRoutes = require('./routes/produtosRoutes')
 const dashboardRoutes = require('./routes/dashboardRoutes')
 const usuariosRoutes = require('./routes/usuarioRoutes')
-const vitrineRoutes = require('./routes/vitrinesRoutes')
+const vitrineRoutes = require('./routes/vitrineRoutes')
 const authRoutes = require('./routes/authRoutes')
 
 app.get('/',(req,res)=>{
