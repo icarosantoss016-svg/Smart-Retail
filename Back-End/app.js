@@ -17,7 +17,7 @@ const usuariosRoutes = require('./routes/usuarioRoutes')
 const vitrineRoutes = require('./routes/vitrineRoutes')
 const authRoutes = require('./routes/authRoutes')
 
-app.get('/',(req,res)=>{
+app.get('/',(req,res)=>{  
     res.send('Smart Retail: Servidor no ar.')
 })
 
